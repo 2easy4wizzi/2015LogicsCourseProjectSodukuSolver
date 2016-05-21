@@ -16,8 +16,7 @@ SOURCES += main.cpp \
     widget.cpp
 
 HEADERS  += \
-    widget.h \
-    globals.h
+    widget.h
 
 FORMS    += \
     widget.ui

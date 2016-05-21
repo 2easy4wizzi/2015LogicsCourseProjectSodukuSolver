@@ -105,7 +105,7 @@ private:
 public:
     Threesome() :x(0), y(0), d(0) {}
     void setTrio(int a, int b, int c) { x = a; y = b; d = c; }
-    void print() { std::cout << "((" << x << "," << y << ") == " << d << ")"; }
+    void print() {  }
     int getx() { return x; }
     int gety() { return y; }
     int getd() { return d; }
@@ -185,9 +185,7 @@ inline void Globals::print_board(string msg, bool origin)
     gui->setTitle(QString(msg.c_str()));
 
 
-    //a->setTitle("tet");
-    //gui->setTitle(msg);
-    //cout << msg << endl;
+
     for (int i = 0; i < 9; i++) {
         for (int j = 0; j < 9; j++) {
             if (origin)
@@ -240,14 +238,15 @@ inline void Globals::fill_var_table_and_givens()
 inline void Globals::print_var_table()
 {
     for (int i = 1; i <= variableCounter; i++) {
-        cout << "x" << i << " | ";
-        variableTable[i].print();
+        gui->appendRowToLog( "x" + QString::number(i) + " | ");
+        //variableTable[i].print();
+        gui->appendRowToLog("((" + QString::number(variableTable[i].getx()) + "," + QString::number(variableTable[i].gety()) + ") == " + QString::number(variableTable[i].getd()) + ")");
         int x = (i % 9 == 0) ? 9 : 0;
-        if (variableTable[i].getd() ==1) cout <<"    " <<i << "mod9=" << i % 9 + x << endl;
-        else cout << endl;
-        if ((i % 100) == 0) {    // Every 100 lines wait for input (just to be able to see the output)
-            system("pause");
-        }
+        if (variableTable[i].getd() ==1) gui->appendRowToLog("    " + QString::number(i) + "mod9=" + QString::number(i % 9 + x) );
+        else gui->appendRowToLog("\n");
+//        if ((i % 100) == 0) {    // Every 100 lines wait for input (just to be able to see the output)
+//            system("pause");
+//        }
     }
 }
 
@@ -316,7 +315,7 @@ inline void Globals::read_sat_result_file(string filename)
                 if (i % 9 == 0) board[variableTable[i].getx() - 1][variableTable[i].gety() - 1] = 9; // if i%9 is 0, change it to 9
                 if (pause) {//if user asked for move by move fillins
                     print_board("step by step", false);
-                    system("pause");
+                    //system("pause");
                 }
             }
         }
@@ -376,7 +375,9 @@ inline void Globals::switchBoard()//allowing user to choose boards from our "dat
         else break;
     }
 
-    cout << "we have " << k << " diffrent boards in the DB"<<endl;
+
+
+    gui->appendRowToLog("we have " + QString::number(k) + " diffrent boards in the DB");
     while (confirm != 'c')
     {
         string board_filename = "board" + std::to_string((i++)%k) + ".txt";
@@ -391,8 +392,8 @@ inline void Globals::debug(string msg, string msg2)
 {
     if (debugMode)
     {
-        cout << "\nin " << msg << " function, there were " << myClauses.size() - formersize << " clauses created.\n"<<msg2 <<endl;
-        cout << "total clauses now is " << myClauses.size() << ". the maximum is 11745."<<endl;
+        gui->appendRowToLog( "\nin " + QString(msg.c_str()) + " function, there were " + QString::number( myClauses.size() - formersize )+ " clauses created.\n" + QString(msg2.c_str()) );
+        gui->appendRowToLog( "total clauses now is " + QString::number(myClauses.size()) + ". the maximum is 11745.");
     }
 }
 
@@ -410,9 +411,9 @@ inline void Globals::runProgram(int op)
     gui->appendRowToLog("number of clauses for this board are: " + QString::number(myClauses.size()) + " from a maximum of 11745 clauses");
     print_board("origin", true);
     print_board("solved", false);
-    QMessageBox msgBox;msgBox.setText("breaking");msgBox.exec();
     if (debugMode) compareResultsOfProgramWithValidatedResults();
-    system("pause");
+    //QMessageBox msgBox;msgBox.setText(QString::number(debugMode));msgBox.exec();
+    //system("pause");
 }
 
 inline void Globals::add9Choose2NegativeClauses(vector<int> vec)
@@ -439,7 +440,7 @@ inline void Globals::compareResultsOfProgramWithValidatedResults()
     fstream boardfile(validatedResult.c_str(), std::ios_base::in);      // initializing board and keeping the origin
 
     if (boardfile.is_open() == 0) {
-        cout << "cannot open validation file" << endl;
+        gui->appendRowToLog("cannot open validation file");
         return;
     }
 
@@ -452,12 +453,12 @@ inline void Globals::compareResultsOfProgramWithValidatedResults()
         for (int j = 0; j < 9; j++) {
             if (boardValidated[i][j] != board[i][j])
             {
-                cout << "there is a mismatch" << endl;
+                gui->appendRowToLog("there is a mismatch");
                 return;
             }
         }
     }
-    cout << "PERFECT MATCH" << endl;
+    gui->appendRowToLog("PERFECT MATCH");
     boardfile.close();
 }
 

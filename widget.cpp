@@ -181,7 +181,7 @@ void Widget::case4()
 void Widget::case5(bool &solved)
 {
     if (!solved) {
-        cout << "you have to solve the board first.only than you can print the var table"<<endl;
+        appendRowToLog("you have to solve the board first.only than you can print the var table");
     }
     else
     {

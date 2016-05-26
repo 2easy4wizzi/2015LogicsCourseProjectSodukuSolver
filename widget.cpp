@@ -2,6 +2,7 @@
 #include "ui_widget.h"
 
 
+
 Widget::Widget(QWidget *parent) :QWidget(parent),ui(new Ui::Widget)
 {
     ui->setupUi(this);
@@ -13,39 +14,148 @@ Widget::Widget(QWidget *parent) :QWidget(parent),ui(new Ui::Widget)
 
 Widget::~Widget()
 {
+    delete g;
     delete ui;
 }
 
 void Widget::init()
 {
-    this->setWindowTitle("window title here");
+
+    setCentralWidgetPropreties();
+    setSoDukoBoardsPropreties();
+    setsolvePropreties();
+    setDBPropreties();
+    setlogPropreties();
+}
+
+void Widget::setCentralWidgetPropreties()
+{
+    this->setWindowTitle("Vadim Khakham & Gilad Eini Soduku Solver using sat4j");
     this->resize(QDesktopWidget().availableGeometry(this).size() * 0.7);
+    mainLayout = new QVBoxLayout;
+    this->setLayout(mainLayout);
+}
 
-    QVBoxLayout* layout = new QVBoxLayout;
-    QHBoxLayout* hl1 = new QHBoxLayout;
-    this->setLayout(layout);
-    mainOriginLayout = new QGridLayout();
-    mainResultLayout = new QGridLayout();
-    mainOriginLayout->setObjectName("origin board");
-    mainResultLayout->setObjectName("result board");
-    build81x81board(mainOriginLayout,1);
-    build81x81board(mainResultLayout,0);
+void Widget::setSoDukoBoardsPropreties()
+{
+    QVBoxLayout* originBlockLayout = new QVBoxLayout;
+    titleOrigin = new QLabel("origin");
+    titleOrigin->setStyleSheet("font-family: \"Times New Roman\", Times, serif; font-size: 20px; background-color: yellow");
+    titleOrigin->setAlignment(Qt::AlignCenter);
+    originBoardLayout = new QGridLayout();
+    originBoardLayout->setObjectName("origin board");
+    build81x81board(originBoardLayout,1);
+    originBlockLayout->addWidget(titleOrigin);
+    originBlockLayout->addLayout(originBoardLayout);
+    originBlockLayout->setSpacing(2);
 
-    title = new QLabel("title here");
-    log = new QTextEdit("log");
-    q = new QLineEdit("type your query here...");
+
+
+    QVBoxLayout* resultBlockLayout = new QVBoxLayout;
+    titleResult = new QLabel("result");
+    titleResult->setStyleSheet("font-family: \"Times New Roman\", Times, serif; font-size: 20px;");
+    titleResult->setAlignment(Qt::AlignCenter);
+    setTitleResultColor(1);
+    resultBoardLayout = new QGridLayout();
+    resultBoardLayout->setObjectName("result board");
+    build81x81board(resultBoardLayout,0);
+    resultBlockLayout->addWidget(titleResult);
+    resultBlockLayout->addLayout(resultBoardLayout);
+    resultBlockLayout->setSpacing(2);
+
+    QHBoxLayout* originAndResultBlocksLayouts = new QHBoxLayout;
+    originAndResultBlocksLayouts->addLayout(originBlockLayout);
+    originAndResultBlocksLayouts->addLayout(resultBlockLayout);
+    //hl1->addWidget(changeBoard);
+    originAndResultBlocksLayouts->setSpacing(50);
+
+    QWidget* nonResizeBlocks = new QWidget(this);
+    nonResizeBlocks->setFixedSize(QSize(500,300));
+    nonResizeBlocks->setLayout(originAndResultBlocksLayouts);
+
+    mainLayout->addWidget(nonResizeBlocks);
+    mainLayout->setAlignment(nonResizeBlocks, Qt::AlignCenter);
+
+
+}
+
+void Widget::setlogPropreties()
+{
+    log = new QTextEdit();
+    log->setStyleSheet("font-family: \"Times New Roman\", Times, serif; font-size: 20px;");
+    log->setReadOnly(true);
+    mainLayout->addWidget(log);
+}
+
+void Widget::setDBPropreties()
+{
+    changeBoard = new QGroupBox;
+    changeBoard->setTitle("DB Options");
+    //changeBoard->setStyleSheet("border: 1px solid gray; border-radius: 9px; margin-top: 0.5em; border-color: red");
+
+    QHBoxLayout* nextAndPrevButtons = new QHBoxLayout;
+    QPushButton* nextBoard = new QPushButton("next");
+    nextBoard->setObjectName("next");
+    connect(nextBoard,SIGNAL(clicked(bool)),this,SLOT(changeBoards()));
+    QPushButton* prevBoard = new QPushButton("prev");
+    prevBoard->setObjectName("prev");
+    connect(prevBoard,SIGNAL(clicked(bool)),this,SLOT(changeBoards()));
+    nextAndPrevButtons->addWidget(prevBoard);
+    nextAndPrevButtons->addWidget(nextBoard);
+
+
+    QHBoxLayout* customPathLayout = new QHBoxLayout;
+    QLabel* customPath = new QLabel("custom");
+    customPath->setToolTip("enter path to board file. ex: <name>.txt");
+    newBoardPath = new QLineEdit("");
+    newBoardPath->setToolTip("enter path to board file. ex: <name>.txt");
+    QPushButton* newBoardPathLoad = new QPushButton("load");
+    newBoardPathLoad->setObjectName("load");
+    connect(newBoardPathLoad,SIGNAL(clicked(bool)),this,SLOT(changeBoards()));
+    compareBoardPath = new QLineEdit("");
+    compareBoardPath->setReadOnly(true);
+    compareBoardPath->setToolTip("path to solved board.after solving the board, comparing result with validated solution");
+
+    customPathLayout->addWidget(customPath);
+    customPathLayout->addWidget(newBoardPath);
+    customPathLayout->addWidget(newBoardPathLoad);
+    customPathLayout->addWidget(compareBoardPath);
+
+    QVBoxLayout* changeBoardLayout = new QVBoxLayout;
+    changeBoardLayout->addLayout(nextAndPrevButtons);
+    changeBoardLayout->addLayout(customPathLayout);
+
+    changeBoard->setLayout(changeBoardLayout);
+    QHBoxLayout* spacersLayout = new QHBoxLayout();
+
+    spacersLayout->addSpacerItem(new QSpacerItem(0,0,QSizePolicy::MinimumExpanding,QSizePolicy::Maximum));
+    spacersLayout->addWidget(changeBoard);
+    spacersLayout->addSpacerItem(new QSpacerItem(0,0,QSizePolicy::MinimumExpanding,QSizePolicy::Maximum));
+    mainLayout->addLayout(spacersLayout);
+}
+
+void Widget::setsolvePropreties()
+{
     runSolverButton = new QPushButton("solve");
+    runSolverButton->setToolTip("run sat solver on chosen board");
     connect(runSolverButton,SIGNAL(clicked(bool)),this,SLOT(solveWasPressed()));
-    hl1->addLayout(mainOriginLayout);
-    hl1->addLayout(mainResultLayout);
 
-    layout->addWidget(title);
-    layout->addLayout(hl1);
-    layout->addWidget(log);
-    layout->addWidget(q);
-    layout->addWidget(runSolverButton);
+    printVtButton = new QPushButton("print VT");
+    printVtButton->setToolTip("print 729 cells of the Variable Table");
+    connect(printVtButton,SIGNAL(clicked(bool)),this,SLOT(printVt()));
 
+    animationButton = new QPushButton("turn animation on");
+    animationButton->setToolTip("printing with animation");
+    connect(animationButton,SIGNAL(clicked(bool)),this,SLOT(animationButtonPressed()));
 
+    QHBoxLayout* buttonLayout = new QHBoxLayout();
+    buttonLayout->addSpacerItem(new QSpacerItem(0,0,QSizePolicy::MinimumExpanding,QSizePolicy::Maximum));
+    buttonLayout->addWidget(runSolverButton);
+    buttonLayout->addWidget(printVtButton);
+    buttonLayout->addWidget(animationButton);
+    buttonLayout->addSpacerItem(new QSpacerItem(0,0,QSizePolicy::MinimumExpanding,QSizePolicy::Maximum));
+
+    mainLayout->addLayout(buttonLayout);
 }
 
 void Widget::build81x81board(QGridLayout *mainLayout, int QMap)
@@ -68,9 +178,6 @@ void Widget::build81x81board(QGridLayout *mainLayout, int QMap)
      }
 }
 
-
-
-
 void Widget::build3x3frame(QFrame *box3x3frame, int rowStart, int colStart, int QMap)
 {
     box3x3frame->setFrameStyle(QFrame::Plain);
@@ -85,6 +192,8 @@ void Widget::build3x3frame(QFrame *box3x3frame, int rowStart, int colStart, int 
         for (int j = 0; j < 3; ++j)
         {
             QLabel* cell = new QLabel("");
+            cell->setAlignment(Qt::AlignCenter);
+            //cell->setAlignment(Qt::AlignVCenter);
             if(QMap) originPointToCellMap.insert(QPair<int,int>(x,y++),cell);
             else     resultPointToCellMap.insert(QPair<int,int>(x,y++),cell);
             cell->setFrameStyle(QFrame::Plain);
@@ -96,30 +205,35 @@ void Widget::build3x3frame(QFrame *box3x3frame, int rowStart, int colStart, int 
     }
 }
 
-void Widget::loadData()
-{
-    mainEngine();
-
-}
-
 int Widget::mainEngine()
 {
-    setTitle("asdasdqweqweqweqweqweqwe");
-    op=0;                   // operation number
+    animation = false;
     string board_filename = "board0.txt";
+    currnetBoardNumber = 0;
     g = new Globals(DEBUG,this);
     solved = false;
     g->init_board(board_filename);
     g->print_board(board_filename + " -default board", true);
     appendRowToLog("Welcome to sudoku solver");
     printOptionsToLog();
+
     return 0;
 
 }
 
-void Widget::setTitle(QString newTitle)
+void Widget::setTitleResultColor(bool start)
 {
-    title->setText(newTitle);
+    QString color = start ? "font-family: \"Times New Roman\", Times, serif; font-size: 20px; background-color: red;" : "font-family: \"Times New Roman\", Times, serif; font-size: 20px; background-color: green;";
+    titleResult->setStyleSheet(color);
+}
+
+void Widget::setTitleOrigin(QString newTitle)
+{
+    titleOrigin->setText(newTitle);
+}
+void Widget::setTitleResult(QString newTitle)
+{
+    titleResult->setText(newTitle);
 }
 
 void Widget::appendRowToLog(QString newRow)
@@ -130,12 +244,12 @@ void Widget::appendRowToLog(QString newRow)
 
 QGridLayout *Widget::getOriginBoard()
 {
-    return mainOriginLayout;
+    return originBoardLayout;
 }
 
 QGridLayout *Widget::getResultBoard()
 {
-    return mainResultLayout;
+    return resultBoardLayout;
 }
 
 QMap<QPair<int, int>, QLabel *> Widget::getOriginPointToCellMap()
@@ -148,17 +262,100 @@ QMap<QPair<int, int>, QLabel *> Widget::getResultPointToCellMap()
     return resultPointToCellMap;
 }
 
-void Widget::case1(bool &solved)
+void Widget::changeBoards()
 {
+    setTitleResultColor(1);
     delete g;
     g = new Globals(DEBUG,this);
-    g->switchBoard();
+    QString senderName = QObject::sender()->objectName();
+    log->clear();
+    if(senderName == "load")
+    {
+        QString path = newBoardPath->text();
+        currnetBoardNumber = 0;
+        int result = g->chooseBoard(path,compareBoardPath);
+        if(result)
+        {
+            titleOrigin->setText(path);
+            appendRowToLog("success loading " + path);
+        }
+        else
+        {
+            newBoardPath->setText("");
+            //QMessageBox msgBox;msgBox.setText("can't find board file with the name: " + path);msgBox.exec();
+            newBoardPath->setText("board0.txt");
+            g->chooseBoard("board0.txt",compareBoardPath);
+            titleOrigin->setText(QString(g->m_board_filename.c_str()) +" -default board");
+            appendRowToLog("failue loading " + path + "- loaded default board instead: board0.txt");
+        }
+    }
+    else
+    {
+        cleanHighlights();
+        g->switchBoard(senderName,currnetBoardNumber);
+    }
     solved = false;
 }
-void Widget::case2(bool &solved)
+
+
+
+void Widget::printVt()
 {
+    log->clear();
     if (!solved) {
-        g->runProgram(op);
+        appendRowToLog("you have to solve the board first.only than you can print the var table");
+    }
+    else
+    {
+        g->print_var_table();
+    }
+
+}
+
+void Widget::animationButtonPressed()
+{
+    animation = !animation;
+    animation ? animationButton->setText("turn animation off") : animationButton->setText("turn animation on") ;
+}
+
+
+void Widget::printOptionsToLog()
+{
+    appendRowToLog("your options are: FILL OPTIONS");
+    g->countDB();
+
+}
+
+void Widget::cleanHighlights()
+{
+    for (int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++) {
+            QLabel* cellOrigin = getOriginPointToCellMap()[QPair<int,int>(i,j)];
+            QLabel* cellResult = getResultPointToCellMap()[QPair<int,int>(i,j)];;
+            cellResult->setText(" ");
+            cellResult->setStyleSheet(" ");
+            cellOrigin->setStyleSheet(" ");
+        }
+    }
+}
+
+void Widget::wait()
+{
+
+    msgBox = new QMessageBox();
+    msgBox->setGeometry(5000,5000,5000,5000);
+    QTimer::singleShot(0, this, SLOT(closeMessageBox()));
+    msgBox->exec();
+
+
+}
+
+
+void Widget::solveWasPressed()
+{
+    log->clear();
+    if (!solved) {
+        g->runProgram(animation);
         solved = true;
     }
     else
@@ -167,49 +364,46 @@ void Widget::case2(bool &solved)
         delete g;
         g = new Globals(DEBUG,this);
         g->init_board(currentBoard);
-        g->runProgram(op);
+        g->runProgram(animation);
     }
 }
-void Widget::case3(bool &solved)
+
+void Widget::closeMessageBox()
 {
-    case2(solved);
-}
-void Widget::case4()
-{
-    g->print_board("current board" , false);
-}
-void Widget::case5(bool &solved)
-{
-    if (!solved) {
-        appendRowToLog("you have to solve the board first.only than you can print the var table");
-    }
-    else
-    {
-        g->print_var_table();
-    }
-}
-void Widget::case6()
-{
-    delete g;
-    exit (0);
+    msgBox->close();
 }
 
-void Widget::printOptionsToLog()
+int Widget::Animation() const
 {
-    appendRowToLog("\n\nplease enter the number of the desired operation :");
-    appendRowToLog("1. choose a sudoku board from DataBase?");
-    appendRowToLog("2. Solve the sudoku board using sat solver");
-    appendRowToLog("3. Solve the sudoku board using sat solver with break each digit");
-    appendRowToLog("4. Print board");
-    appendRowToLog("5. Print var table");
-    appendRowToLog("6. exit");
+    return animation;
+}
+
+void Widget::setAnimation(bool value)
+{
+    animation = value;
+}
+
+QLabel *Widget::getLastCell() const
+{
+    return lastCell;
+}
+
+void Widget::setLastCell(QLabel *value)
+{
+    lastCell = value;
+}
+
+QPair<int, int> *Widget::getLastPair() const
+{
+    return lastPair;
+}
+
+void Widget::setLastPair(QPair<int,int> *value)
+{
+    lastPair = value;
 }
 
 
-void Widget::solveWasPressed()
-{
-    case2(solved);
-}
 
 
 

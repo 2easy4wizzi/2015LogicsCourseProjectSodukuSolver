@@ -11,6 +11,8 @@
 #include <QTextEdit>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QGroupBox>
+#include <QTimer>
 
 class Globals;
 namespace Ui {
@@ -26,11 +28,18 @@ public:
     explicit Widget(QWidget *parent = 0);
     ~Widget();
     void init();
+    void setCentralWidgetPropreties();
+    void setSoDukoBoardsPropreties();
+    void setlogPropreties();
+    void setDBPropreties();
+    void setsolvePropreties();
+
     void build81x81board(QGridLayout* mainLayout,int QMap);
     void build3x3frame(QFrame* box3x3frame,int rowStart, int colStart,int QMap);
-    void loadData();
     int mainEngine();
-    void setTitle(QString newTitle);
+    void setTitleResult(QString newTitle);
+    void setTitleResultColor(bool start);
+    void setTitleOrigin(QString newTitle);
     void appendRowToLog(QString newRow);
     QGridLayout* getOriginBoard();
     QGridLayout* getResultBoard();
@@ -38,30 +47,57 @@ public:
     QMap<QPair<int, int>, QLabel *> getOriginPointToCellMap() ;
 
     QMap<QPair<int, int>, QLabel *> getResultPointToCellMap() ;
-    void case1(bool& solved);
-    void case2(bool& solved);
-    void case3(bool& solved);
-    void case4();
-    void case5(bool &solved);
-    void case6();
+
+
+
     void printOptionsToLog();
 
+    void cleanHighlights();
+    void wait();
+
+
+    QPair<int,int> *getLastPair() const;
+    void setLastPair(QPair<int,int> *value);
+
+    QLabel *getLastCell() const;
+    void setLastCell(QLabel *value);
+
+    int Animation() const;
+    void setAnimation(bool value);
+
 public slots:
+    void changeBoards();
+    void printVt();
+    void animationButtonPressed();
     void solveWasPressed();
+    void closeMessageBox();
+
 
 private:
     Ui::Widget *ui;
-    QGridLayout* mainOriginLayout;
-    QGridLayout* mainResultLayout;
-    QLabel* title;
+    QVBoxLayout* mainLayout;
+    QGridLayout* originBoardLayout;
+    QGridLayout* resultBoardLayout;
+    QLabel* titleOrigin;
+    QLabel* titleResult;
+    QGroupBox * changeBoard;
     QTextEdit* log;
     QLineEdit* q;
     QPushButton* runSolverButton;
+    QPushButton* printVtButton;
+    QPushButton* animationButton;
+
     Globals *g;
     QMap<QPair<int,int>,QLabel*> originPointToCellMap;
     QMap<QPair<int,int>,QLabel*> resultPointToCellMap;
-    int op;
+    bool animation;
+    QLineEdit* newBoardPath;
+    QLineEdit* compareBoardPath;
     bool solved;
+    int currnetBoardNumber;
+    QPair<int,int>* lastPair;
+    QLabel* lastCell;
+    QMessageBox* msgBox;
 
 };
 
@@ -86,7 +122,7 @@ using std::string;
 #define N 9
 #define CELLS_NO N*N
 #define VAR_NO N*N*N      // Variable number
-#define DEBUG false
+#define DEBUG true
 
 class Clause {
 private:
@@ -147,10 +183,12 @@ public:
     void validClauses();
     void defenitionClauses();
 
-    void switchBoard();
+    void countDB();
+    void switchBoard(QString direction, int &boardNumber);
+    int chooseBoard(QString path, QLineEdit *compare);
     void debug(string msg, string msg2);
 
-    void runProgram(int op);
+    void runProgram(bool animation);
 
     void add9Choose2NegativeClauses(vector<int> vec);
 
@@ -163,41 +201,40 @@ public:
 
 inline void Globals::print_board(string msg, bool origin)
 {
-
-//    qDebug()<< "1" << parent->objectName();
-//    qDebug()<< "2" << parent->getOriginBoard()->objectName();
-//    qDebug()<< "3" << parent->getOriginBoard()->count();
-//    qDebug()<< "4" << parent->getOriginBoard()->itemAt(7);
-//    QLayoutItem* item3x3 =parent->getOriginBoard()->itemAt(7);
-//    qDebug()<< "4" << item3x3;
-//    QFrame * box3x3frame = dynamic_cast<QFrame *>(item3x3->widget());
-//    qDebug()<< "4" << box3x3frame;
-//    QObjectList box3x3list = box3x3frame->children();
-//    qDebug()<< "5" << box3x3list.size();
-//    QGridLayout* box3x3 = dynamic_cast<QGridLayout*>(box3x3frame->layout());
-//    qDebug()<< "6" << box3x3 << box3x3->count() << box3x3->itemAt(2);
-//    QLayoutItem* itemCell =box3x3->itemAt(2);
-//    qDebug()<< "6" <<itemCell;
-//    QLabel* a = dynamic_cast<QLabel*>(itemCell->widget());
-//    qDebug()<< "6" << a->text();
-//    a->setText("asd");
-
-    gui->setTitle(QString(msg.c_str()));
-
-
-
+    QPair<int,int>* lastPair = gui->getLastPair();
+    QLabel* lastCell = gui->getLastCell();
+    bool colorCell = false;
+    if(msg == "step by step") colorCell=true;
+    origin ? gui->setTitleOrigin(QString(msg.c_str())) : gui->setTitleResult(QString(msg.c_str()));
     for (int i = 0; i < 9; i++) {
         for (int j = 0; j < 9; j++) {
+            QString content(" ");
+            QLabel* cell;
             if (origin)
             {
-                QString content = boardOrigin[i][j] ? QString::number(boardOrigin[i][j]) : " ";
-                gui->getOriginPointToCellMap()[QPair<int,int>(i,j)]->setText(content);
+                cell = gui->getOriginPointToCellMap()[QPair<int,int>(i,j)];
+                if(boardOrigin[i][j])
+                {
+                    content = QString::number(boardOrigin[i][j]);
+                }
             }
             else
             {
-                QString content = board[i][j] ? QString::number(board[i][j]) : " ";
-                gui->getResultPointToCellMap()[QPair<int,int>(i,j)]->setText(content);
+                cell = gui->getResultPointToCellMap()[QPair<int,int>(i,j)];
+                content = board[i][j] ? QString::number(board[i][j]) : " ";
             }
+            if(boardOrigin[i][j]) cell->setStyleSheet("background-color: yellow;");
+            cell->setText(content);
+            if(colorCell && boardOrigin[i][j]==0 && (lastPair->first < i || (lastPair->first==i && lastPair->second < j)))
+            {
+                colorCell = false;
+                if(lastCell) lastCell->setStyleSheet(" ");
+                gui->setLastCell( cell);
+                QPair<int,int>* tmp = new QPair<int,int>(i,j);
+                gui->setLastPair(tmp);
+                cell->setStyleSheet("background-color: green;");
+            }
+
         }
     }
 }
@@ -238,15 +275,11 @@ inline void Globals::fill_var_table_and_givens()
 inline void Globals::print_var_table()
 {
     for (int i = 1; i <= variableCounter; i++) {
-        gui->appendRowToLog( "x" + QString::number(i) + " | ");
-        //variableTable[i].print();
-        gui->appendRowToLog("((" + QString::number(variableTable[i].getx()) + "," + QString::number(variableTable[i].gety()) + ") == " + QString::number(variableTable[i].getd()) + ")");
         int x = (i % 9 == 0) ? 9 : 0;
-        if (variableTable[i].getd() ==1) gui->appendRowToLog("    " + QString::number(i) + "mod9=" + QString::number(i % 9 + x) );
-        else gui->appendRowToLog("\n");
-//        if ((i % 100) == 0) {    // Every 100 lines wait for input (just to be able to see the output)
-//            system("pause");
-//        }
+        QString varTrueValue = (variableTable[i].getd() ==1) ? "    " + QString::number(i) + "mod9=" + QString::number(i % 9 + x) : "";
+        gui->appendRowToLog("x" + QString::number(i) + " | " "((" + QString::number(variableTable[i].getx()) + "," +
+                            QString::number(variableTable[i].gety()) + ") == " + QString::number(variableTable[i].getd()) +
+                            ")" + varTrueValue);
     }
 }
 
@@ -307,6 +340,10 @@ inline void Globals::read_sat_result_file(string filename)
     }
 
     //filling the board with the results
+    //gui->setLastCell(NULL);
+    QPair<int,int>* tmp = new QPair<int,int>(-1,-1);
+    gui->setLastPair(tmp);
+    gui->setLastCell(NULL);
     for (int i = 1; i < VAR_NO+1; i++) {
         if (variableTable[i].getd() == 1) { //no need for vars that are 0
             if (board[variableTable[i].getx() - 1][variableTable[i].gety() - 1] == 0) //check that its not already on the board (given)
@@ -315,9 +352,13 @@ inline void Globals::read_sat_result_file(string filename)
                 if (i % 9 == 0) board[variableTable[i].getx() - 1][variableTable[i].gety() - 1] = 9; // if i%9 is 0, change it to 9
                 if (pause) {//if user asked for move by move fillins
                     print_board("step by step", false);
-                    //system("pause");
+                    gui->wait();
                 }
             }
+        }
+        if(i==VAR_NO && gui->getLastCell())
+        {
+            gui->getLastCell()->setStyleSheet(" ");
         }
     }
 
@@ -362,12 +403,21 @@ inline int Globals::getCellGiven(int i)
     return board[indexToMarix[i].first][indexToMarix[i].second] ; //gets a given's value
 }
 
-
-
-inline void Globals::switchBoard()//allowing user to choose boards from our "data base"
+inline void Globals::countDB()
 {
-    char confirm = NULL;
-    int i = 1,j = 0,k = 0;
+    int j = 0,k = 0;
+    while (1) {
+        string board_filename = "board" + std::to_string((j++)) + ".txt";
+        fstream boardfile(board_filename.c_str(), std::ios_base::in);      // initializing board and keeping the origin
+        if (boardfile.is_open()) k++;
+        else break;
+    }
+    gui->appendRowToLog("we have " + QString::number(k) + " diffrent boards in the DB");
+}
+
+inline void Globals::switchBoard(QString direction,int& boardNumber)//allowing user to choose boards from our "data base"
+{
+    int j = 0,k = 0;
     while (1) {
         string board_filename = "board" + std::to_string((j++)) + ".txt";
         fstream boardfile(board_filename.c_str(), std::ios_base::in);      // initializing board and keeping the origin
@@ -377,29 +427,64 @@ inline void Globals::switchBoard()//allowing user to choose boards from our "dat
 
 
 
-    gui->appendRowToLog("we have " + QString::number(k) + " diffrent boards in the DB");
-    while (confirm != 'c')
+    direction == "next" ? boardNumber++ : boardNumber--;
+    if(boardNumber < 0) boardNumber+=k;
+
+    string board_filename = "board" + std::to_string((boardNumber)%k) + ".txt";
+    init_board(board_filename);
+    m_board_filename = board_filename.substr(0, board_filename.size() - 4); //drop .txt
+    print_board(board_filename, true);
+}
+
+inline int Globals::chooseBoard(QString path,QLineEdit* compare)//allowing user to choose board that he likes
+{
+
+    QByteArray pathBA = path.toLatin1();
+    const char *pathStd = pathBA.data();
+
+
+    fstream boardfile(pathStd, std::ios_base::in);      // initializing board and keeping the origin
+    if (!boardfile.is_open())
     {
-        string board_filename = "board" + std::to_string((i++)%k) + ".txt";
-        init_board(board_filename);
-        m_board_filename = board_filename.substr(0, board_filename.size() - 4); //drop .txt
-        print_board(board_filename + " -to confirm board, type 'c':", true);
-        cin >> confirm;
+        return 0;
     }
+
+    string board_filename = pathStd;
+    gui->cleanHighlights();
+    init_board(board_filename);
+    print_board(board_filename, true);
+    m_board_filename = board_filename.substr(0, board_filename.size() - 4); //drop .txt
+
+
+    string validatedResult = m_board_filename + "valid.txt";
+    fstream boardfileV(validatedResult.c_str(), std::ios_base::in);
+
+    if (boardfileV.is_open() == 0) {
+        compare->setText("can't find a file for validation");
+    }
+    else{
+
+        compare->setText(validatedResult.c_str());
+    }
+
+
+
+    return 1;
 }
 
 inline void Globals::debug(string msg, string msg2)
 {
     if (debugMode)
     {
-        gui->appendRowToLog( "\nin " + QString(msg.c_str()) + " function, there were " + QString::number( myClauses.size() - formersize )+ " clauses created.\n" + QString(msg2.c_str()) );
-        gui->appendRowToLog( "total clauses now is " + QString::number(myClauses.size()) + ". the maximum is 11745.");
+        gui->appendRowToLog( "in '" + QString(msg.c_str()) + "' function, there were " +
+                             QString::number( myClauses.size() - formersize )+ " clauses created "
+                             + QString(msg2.c_str()) +" -total clauses now is " + QString::number(myClauses.size()));
     }
 }
 
-inline void Globals::runProgram(int op)
+inline void Globals::runProgram(bool animation)
 {
-    if (op == 3) pause = true;
+    if (animation) pause = true;
     fill_var_table_and_givens();
     defenitionClauses();
     uniqueness();
@@ -407,10 +492,11 @@ inline void Globals::runProgram(int op)
     output_clauses_filename = output_clauses_file();
     sat_result_filename = run_sat_solver(output_clauses_filename);
     read_sat_result_file(sat_result_filename);
-    gui->appendRowToLog("\n\nsummary:");
+    gui->appendRowToLog("summary:");
     gui->appendRowToLog("number of clauses for this board are: " + QString::number(myClauses.size()) + " from a maximum of 11745 clauses");
-    print_board("origin", true);
+    //print_board("origin", true);
     print_board("solved", false);
+    gui->setTitleResultColor(0);
     if (debugMode) compareResultsOfProgramWithValidatedResults();
     //QMessageBox msgBox;msgBox.setText(QString::number(debugMode));msgBox.exec();
     //system("pause");
@@ -440,7 +526,7 @@ inline void Globals::compareResultsOfProgramWithValidatedResults()
     fstream boardfile(validatedResult.c_str(), std::ios_base::in);      // initializing board and keeping the origin
 
     if (boardfile.is_open() == 0) {
-        gui->appendRowToLog("cannot open validation file");
+        gui->appendRowToLog(QString(validatedResult.c_str())  + "doesn't exist");
         return;
     }
 
@@ -453,12 +539,12 @@ inline void Globals::compareResultsOfProgramWithValidatedResults()
         for (int j = 0; j < 9; j++) {
             if (boardValidated[i][j] != board[i][j])
             {
-                gui->appendRowToLog("there is a mismatch");
+                gui->appendRowToLog("there is a mismatch with " + QString(validatedResult.c_str()));
                 return;
             }
         }
     }
-    gui->appendRowToLog("PERFECT MATCH");
+    gui->appendRowToLog("compared Solved board with " + QString(validatedResult.c_str()) + " --- PERFECT MATCH :)");
     boardfile.close();
 }
 
@@ -482,7 +568,7 @@ inline void Globals::uniqueness()//creating the uniqueness clauses. maximum 2916
 
         }
     }
-    debug("uniqueness", "the maximum clauses are 2916");//for debugging
+    debug("uniqueness", "from max 2916");//for debugging
 }
 
 inline void Globals::validClauses() //creating the uniqueness clauses. maximum 8748 clauses
@@ -525,7 +611,7 @@ inline void Globals::validClauses() //creating the uniqueness clauses. maximum 8
             add9Choose2NegativeClauses(grid);
         }
     }
-    debug("validClauses", "the maximum clauses are 8748");//for debuging
+    debug("validClauses", "from max 8748");//for debuging
 }
 
 inline void Globals::defenitionClauses() //creating the uniqueness clauses. maximum 81 clauses
@@ -543,7 +629,7 @@ inline void Globals::defenitionClauses() //creating the uniqueness clauses. maxi
             myClauses.push_back(myClause);
         }
     }
-    debug("defenitionClauses", "the maximum clauses are 81"); //for debugging
+    debug("defenitionClauses", "from max 81"); //for debugging
 }
 
 

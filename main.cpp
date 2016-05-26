@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     Widget mainPage;
-    mainPage.loadData();
+    mainPage.mainEngine();
     mainPage.show();
     return a.exec();
 }

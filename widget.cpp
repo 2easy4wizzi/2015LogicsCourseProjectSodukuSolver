@@ -321,7 +321,6 @@ void Widget::animationButtonPressed()
 
 void Widget::printOptionsToLog()
 {
-    appendRowToLog("your options are: FILL OPTIONS");
     g->countDB();
 
 }

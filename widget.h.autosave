@@ -517,7 +517,7 @@ inline void Globals::compareResultsOfProgramWithValidatedResults()
     fstream boardfile(validatedResult.c_str(), std::ios_base::in);      // initializing board and keeping the origin
 
     if (boardfile.is_open() == 0) {
-        gui->appendRowToLog("validation file " + QString(validatedResult.c_str())  + " doesn't exist. can't comapare");
+        gui->appendRowToLog("-validation file " + QString(validatedResult.c_str())  + " doesn't exist. can't comapare");
         return;
     }
 

@@ -212,6 +212,7 @@ int Widget::mainEngine()
     currnetBoardNumber = 0;
     g = new Globals(DEBUG,this);
     solved = false;
+    g->createBoardZeroIfNotExist("board0.txt");
     g->init_board(board_filename);
     g->print_board(board_filename + " -default board", true);
     appendRowToLog("Welcome to sudoku solver");
@@ -381,6 +382,7 @@ void Widget::setAnimation(bool value)
 {
     animation = value;
 }
+
 
 QLabel *Widget::getLastCell() const
 {

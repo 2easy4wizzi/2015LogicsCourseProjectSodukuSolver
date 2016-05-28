@@ -5,6 +5,7 @@
 #-------------------------------------------------
 
 QT       += core gui
+#DLL += Qt5Widgets.dll
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -20,3 +21,5 @@ HEADERS  += \
 
 FORMS    += \
     widget.ui
+
+#@CONFIG += debug_and_release@

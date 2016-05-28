@@ -184,10 +184,33 @@ public:
     bool isInTheCol(int set, int digit);
     bool isInTheGrid(int set, int digit);
 
+    void createBoardZeroIfNotExist(string defualtBoard);
+
     Widget* gui;
 
 };
 
+inline void Globals::createBoardZeroIfNotExist(string defualtBoard)
+{
+    fstream boardfile(defualtBoard.c_str(), std::ios_base::in);      // initializing board and keeping the origin
+    if (boardfile.is_open() == 1) {
+        boardfile.close();
+        return;
+    }
+    ofstream board0(defualtBoard.c_str());
+    board0 << "5 3 0 0 7 0 0 0 0" <<endl;//line 1
+    board0 << "6 0 0 1 9 5 0 0 0" <<endl;//2
+    board0 << "0 9 8 0 0 0 0 6 0" <<endl;//3
+    board0 << "8 0 0 0 6 0 0 0 3" <<endl;//4
+    board0 << "4 0 0 8 0 3 0 0 1" <<endl;//5
+    board0 << "7 0 0 0 2 0 0 0 6" <<endl;//6
+    board0 << "0 6 0 0 0 0 2 8 0" <<endl;//7
+    board0 << "0 0 0 4 1 9 0 0 5" <<endl;//8
+    board0 << "0 0 0 0 8 0 0 7 9" <<endl;//9
+    board0.close();
+
+    return;
+}
 
 inline void Globals::print_board(string msg, bool origin)
 {
@@ -352,7 +375,7 @@ inline void Globals::read_sat_result_file(string filename)
             gui->getLastCell()->setStyleSheet(" ");
         }
     }
-
+    parsefile.close();
 }
 
 
@@ -400,10 +423,14 @@ inline void Globals::countDB()
     while (1) {
         string board_filename = "board" + std::to_string((j++)) + ".txt";
         fstream boardfile(board_filename.c_str(), std::ios_base::in);      // initializing board and keeping the origin
-        if (boardfile.is_open()) k++;
+        if (boardfile.is_open())
+        {
+            boardfile.close();
+            k++;
+        }
         else break;
     }
-    gui->appendRowToLog("we have " + QString::number(k) + " diffrent boards in the DB");
+    gui->appendRowToLog("*we have " + QString::number(k) + " diffrent boards in the DB");
 }
 
 inline void Globals::switchBoard(QString direction,int& boardNumber)//allowing user to choose boards from our "data base"
@@ -412,7 +439,11 @@ inline void Globals::switchBoard(QString direction,int& boardNumber)//allowing u
     while (1) {
         string board_filename = "board" + std::to_string((j++)) + ".txt";
         fstream boardfile(board_filename.c_str(), std::ios_base::in);      // initializing board and keeping the origin
-        if (boardfile.is_open()) k++;
+        if (boardfile.is_open())
+        {
+            boardfile.close();
+            k++;
+        }
         else break;
     }
 
@@ -439,7 +470,7 @@ inline int Globals::chooseBoard(QString path,QLineEdit* compare)//allowing user 
     {
         return 0;
     }
-
+    boardfile.close();
     string board_filename = pathStd;
     gui->cleanHighlights();
     init_board(board_filename);
@@ -456,6 +487,7 @@ inline int Globals::chooseBoard(QString path,QLineEdit* compare)//allowing user 
     else{
 
         compare->setText(validatedResult.c_str());
+        boardfileV.close();
     }
 
 

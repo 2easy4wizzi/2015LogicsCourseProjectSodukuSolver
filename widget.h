@@ -165,7 +165,7 @@ public:
 
     string output_clauses_file();    // Creation of output_clauses file (for the SAT solver)
     string run_sat_solver(string clauses_filename);             // Running SAT solver program on the output_clauses file
-    void read_sat_result_file(string filename);                 // Reading the result output file of the SAT solver program and translating it to the Sudoku board
+    void read_sat_result_file();                 // Reading the result output file of the SAT solver program and translating it to the Sudoku board
     bool isCellGiven(int i);
     int getCellGiven(int i);
     void uniqueness();
@@ -174,7 +174,7 @@ public:
     void countDB();
     void switchBoard(QString direction, int &boardNumber);
     int chooseBoard(QString path, QLineEdit *compare);
-    void debug(string msg, string msg2, string msg3, QString max);
+    void debug(string msg, string msg3, QString max);
     void runProgram(bool animation);
     void add9Choose2NegativeClauses(vector<int> vec);
     void compareResultsOfProgramWithValidatedResults();
@@ -331,7 +331,7 @@ inline string Globals::run_sat_solver(string clauses_filename)
     return sat_result_filename;
 }
 
-inline void Globals::read_sat_result_file(string filename)
+inline void Globals::read_sat_result_file()
 {
     //qDebug() << sat_result_filename.c_str();
     fstream parsefile(sat_result_filename.c_str(), std::ios_base::in);      // open parsefile file named sat_result_filename for reading
@@ -495,7 +495,7 @@ inline int Globals::chooseBoard(QString path,QLineEdit* compare)//allowing user 
     return 1;
 }
 
-inline void Globals::debug(string msg, string msg2, string msg3, QString max)
+inline void Globals::debug(string msg, string msg3, QString max)
 {
     if (debugMode)
     {
@@ -513,7 +513,7 @@ inline void Globals::runProgram(bool animation)
     validClauses();
     output_clauses_filename = output_clauses_file();
     sat_result_filename = run_sat_solver(output_clauses_filename);
-    read_sat_result_file(sat_result_filename);
+    read_sat_result_file();
     //gui->appendRowToLog(""  );
     gui->appendRowToLog("\n-Summary: number of clauses created for this board: " + QString::number(myClauses.size()) + " from a maximum of 11745 clauses");
     //print_board("origin", true);
@@ -591,7 +591,7 @@ inline void Globals::uniqueness()//creating the uniqueness clauses. maximum 2916
 
         }
     }
-    debug("uniqueness", "from max 36*81 = 2916",
+    debug("uniqueness",
           "*for each empty cell(max 81):"
           " \n               **9choose2(36) on the digits and added a clause: [not(p0) V not(p1)]"
           ,"36*81 = 2916");//for debugging
@@ -647,7 +647,7 @@ inline void Globals::validClauses() //creating the uniqueness clauses. maximum 8
             }
         }
     }
-    debug("validClauses", "from max 27*9*36 = 8748",
+    debug("validClauses",
           "*for each row/colum/grid (27 times):"
           "\n                **for each digit(max 9 determind by board):\n                     "
           "***9choose2 on cells(36) and added [not(digit in cell i) V not(digit in cell j)] "
@@ -779,7 +779,7 @@ inline void Globals::defenitionClauses() //creating the uniqueness clauses. maxi
     }
     eliminateGivens(size);
     debug("defenitionClauses",
-          "from max 81",
+
           "*for each cell(81):\n               **if 'given'- gets a clause of size 1."
           "\n               **if 'not given'- gets a clause of maximum size 9 (could be less, determind by the board)"
           , "81"); //for debugging

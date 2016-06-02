@@ -26,3 +26,7 @@ it's the user's responsibility to supply a valid board in a text file.
 
 5.don't remove anything from sodukoExe folder. all files there are needed for the 
 program.(except of the board txt files. the program don't need it.)
+
+6.added an empty board (board4.txt) to illustrate that without givens the 
+clauses number will be 11745 just like the article, and to show sat solver will 
+return the first solution it will find(regardless to how many exist).

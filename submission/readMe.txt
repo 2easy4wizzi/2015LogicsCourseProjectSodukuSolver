@@ -3,8 +3,8 @@
 Suduku Solver using Sat Solve sat4j
 
 submitters:
-Gilad Eini, 	giladeini@gmail.com		,id 034744920
-Vadim Khakham, 	vadim.khakham@gmail.com	,id 311890156
+Gilad Eini, 	giladeini@gmail.com		,
+Vadim Khakham, 	vadim.khakham@gmail.com	,
 
 
 
